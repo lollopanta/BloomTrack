@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloomTrack - Advanced Plant Blooming Monitor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            transition: transform 0.3s ease;
+        }
+        .bloom-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .bloom-high { background-color: #ff6b6b; }
+        .bloom-medium { background-color: #ffa726; }
+        .bloom-low { background-color: #66bb6a; }
+        .map-container {
+            height: 400px;
+            width: 100%;
+        }
+        .chart-container {
+            height: 300px;
+            width: 100%;
+        }
+        .feature-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .analysis-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .ml-card {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar is-dark">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <i class="fas fa-seedling"></i> <strong>BloomTrack</strong>
+            </a>
+        </div>
+        <div class="navbar-menu">
+            <div class="navbar-end">
+                <a class="navbar-item" href="#dashboard">Dashboard</a>
+                <a class="navbar-item" href="#analysis">Analysis</a>
+                <a class="navbar-item" href="#maps">Maps</a>
+                <a class="navbar-item" href="#ml">ML Predictions</a>
+                <a class="navbar-item" href="/api/docs">API Docs</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero hero-gradient is-medium">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title is-1 has-text-white">
+                    <i class="fas fa-seedling"></i> BloomTrack Advanced
+                </h1>
+                <h2 class="subtitle is-3 has-text-white">
+                    Advanced Plant Blooming Event Monitoring with AI & Geospatial Analysis
+                </h2>
+                <p class="has-text-white">
+                    Harnessing NASA Earth observation data with machine learning and advanced geospatial analysis
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="section">
+        <div class="container">
+            <h2 class="title is-2 has-text-centered">Global Bloom Dashboard</h2>
+            
+            <!-- Statistics Cards -->
+            <div class="columns is-multiline">
+                <div class="column is-one-quarter">
+                    <div class="card feature-card">
+                        <div class="card-content has-text-centered">
+                            <i class="fas fa-globe fa-3x"></i>
+                            <h3 class="title is-4">Global Events</h3>
+                            <p class="subtitle" id="total-events">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-one-quarter">
+                    <div class="card analysis-card">
+                        <div class="card-content has-text-centered">
+                            <i class="fas fa-chart-line fa-3x"></i>
+                            <h3 class="title is-4">Active Regions</h3>
+                            <p class="subtitle" id="active-regions">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-one-quarter">
+                    <div class="card ml-card">
+                        <div class="card-content has-text-centered">
+                            <i class="fas fa-brain fa-3x"></i>
+                            <h3 class="title is-4">ML Models</h3>
+                            <p class="subtitle">Trained & Ready</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-one-quarter">
+                    <div class="card feature-card">
+                        <div class="card-content has-text-centered">
+                            <i class="fas fa-satellite fa-3x"></i>
+                            <h3 class="title is-4">Satellite Sources</h3>
+                            <p class="subtitle">6 Active</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloom Events Cards -->
+            <div class="columns is-multiline" id="bloom-cards">
+                <!-- Bloom event cards will be loaded here -->
+            </div>
+            
+            <div class="has-text-centered" style="margin-top: 2rem;">
+                <button class="button is-primary is-large" onclick="loadBloomData()">
+                    <span class="icon">
+                        <i class="fas fa-satellite"></i>
+                    </span>
+                    <span>Load Global Bloom Data</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analysis Section -->
+    <section id="analysis" class="section">
+        <div class="container">
+            <h2 class="title is-2 has-text-centered">Advanced Analysis</h2>
+            
+            <div class="columns is-multiline">
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">Spatial Clustering Analysis</p>
+                        </div>
+                        <div class="card-content">
+                            <p>Detect spatial clusters of bloom events using DBSCAN algorithm</p>
+                            <button class="button is-info" onclick="analyzeSpatialClusters()">
+                                <span class="icon"><i class="fas fa-project-diagram"></i></span>
+                                <span>Analyze Clusters</span>
+                            </button>
+                            <div id="cluster-results" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">Temporal Pattern Analysis</p>
+                        </div>
+                        <div class="card-content">
+                            <p>Analyze seasonal and yearly patterns in bloom events</p>
+                            <button class="button is-info" onclick="analyzeTemporalPatterns()">
+                                <span class="icon"><i class="fas fa-clock"></i></span>
+                                <span>Analyze Patterns</span>
+                            </button>
+                            <div id="temporal-results" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">Bloom Density Analysis</p>
+                        </div>
+                        <div class="card-content">
+                            <p>Calculate bloom density using spatial grid analysis</p>
+                            <button class="button is-info" onclick="analyzeBloomDensity()">
+                                <span class="icon"><i class="fas fa-th"></i></span>
+                                <span>Calculate Density</span>
+                            </button>
+                            <div id="density-results" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">Spatial Statistics</p>
+                        </div>
+                        <div class="card-content">
+                            <p>Get comprehensive spatial statistics for bloom events</p>
+                            <button class="button is-info" onclick="getSpatialStatistics()">
+                                <span class="icon"><i class="fas fa-chart-bar"></i></span>
+                                <span>Get Statistics</span>
+                            </button>
+                            <div id="spatial-results" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Maps Section -->
+    <section id="maps" class="section">
+        <div class="container">
+            <h2 class="title is-2 has-text-centered">Interactive Maps</h2>
+            
+            <div class="columns">
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">Interactive Bloom Map</p>
+                        </div>
+                        <div class="card-content">
+                            <button class="button is-success" onclick="loadInteractiveMap()">
+                                <span class="icon"><i class="fas fa-map"></i></span>
+                                <span>Load Interactive Map</span>
+                            </button>
+                            <div id="interactive-map" class="map-container mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">Conservation Priority Map</p>
+                        </div>
+                        <div class="card-content">
+                            <button class="button is-warning" onclick="loadConservationMap()">
+                                <span class="icon"><i class="fas fa-shield-alt"></i></span>
+                                <span>Load Priority Map</span>
+                            </button>
+                            <div id="conservation-map" class="map-container mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ML Predictions Section -->
+    <section id="ml" class="section">
+        <div class="container">
+            <h2 class="title is-2 has-text-centered">Machine Learning Predictions</h2>
+            
+            <div class="columns is-multiline">
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">Train ML Models</p>
+                        </div>
+                        <div class="card-content">
+                            <p>Train machine learning models for bloom prediction</p>
+                            <div class="buttons">
+                                <button class="button is-primary" onclick="trainIntensityModel()">
+                                    <span class="icon"><i class="fas fa-brain"></i></span>
+                                    <span>Train Intensity Model</span>
+                                </button>
+                                <button class="button is-primary" onclick="trainTimingModel()">
+                                    <span class="icon"><i class="fas fa-clock"></i></span>
+                                    <span>Train Timing Model</span>
+                                </button>
+                            </div>
+                            <div id="training-results" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">Bloom Predictions</p>
+                        </div>
+                        <div class="card-content">
+                            <div class="field">
+                                <label class="label">Latitude</label>
+                                <input class="input" type="number" id="pred-lat" placeholder="36.7783" step="0.0001">
+                            </div>
+                            <div class="field">
+                                <label class="label">Longitude</label>
+                                <input class="input" type="number" id="pred-lon" placeholder="-119.4179" step="0.0001">
+                            </div>
+                            <div class="field">
+                                <label class="label">Vegetation Type</label>
+                                <div class="select is-fullwidth">
+                                    <select id="pred-vegetation">
+                                        <option value="agricultural">Agricultural</option>
+                                        <option value="forest">Forest</option>
+                                        <option value="grassland">Grassland</option>
+                                        <option value="desert">Desert</option>
+                                        <option value="wetland">Wetland</option>
+                                        <option value="shrubland">Shrubland</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="button is-success" onclick="predictBloom()">
+                                <span class="icon"><i class="fas fa-crystal-ball"></i></span>
+                                <span>Predict Bloom</span>
+                            </button>
+                            <div id="prediction-results" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">Anomaly Detection</p>
+                        </div>
+                        <div class="card-content">
+                            <p>Detect anomalous bloom patterns using machine learning</p>
+                            <button class="button is-warning" onclick="detectAnomalies()">
+                                <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
+                                <span>Detect Anomalies</span>
+                            </button>
+                            <div id="anomaly-results" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">Bloom Forecast</p>
+                        </div>
+                        <div class="card-content">
+                            <p>Generate forecast for upcoming bloom events</p>
+                            <button class="button is-info" onclick="generateForecast()">
+                                <span class="icon"><i class="fas fa-chart-line"></i></span>
+                                <span>Generate Forecast</span>
+                            </button>
+                            <div id="forecast-results" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="content has-text-centered">
+            <p>
+                <strong>BloomTrack</strong> - Advanced Plant Blooming Event Monitoring System
+            </p>
+            <p>Powered by NASA Earth Observation Data, Machine Learning, and Geospatial Analysis</p>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let bloomData = [];
+        let interactiveMap = null;
+        let conservationMap = null;
+
+        // Load bloom data
+        async function loadBloomData() {
+            const button = document.querySelector('button');
+            button.classList.add('is-loading');
+            
+            try {
+                const response = await fetch('/api/bloom-events');
+                bloomData = await response.json();
+                displayBloomCards(bloomData);
+                updateStatistics();
+            } catch (error) {
+                console.error('Error loading bloom data:', error);
+                alert('Error loading bloom data. Please try again.');
+            } finally {
+                button.classList.remove('is-loading');
+            }
+        }
+
+        function displayBloomCards(events) {
+            const container = document.getElementById('bloom-cards');
+            container.innerHTML = '';
+
+            events.forEach(event => {
+                const card = document.createElement('div');
+                card.className = 'column is-one-third';
+                card.innerHTML = `
+                    <div class="card card-hover">
+                        <div class="card-content">
+                            <div class="media">
+                                <div class="media-content">
+                                    <p class="title is-4">${event.location}</p>
+                                    <p class="subtitle is-6">${event.region}</p>
+                                </div>
+                            </div>
+                            <div class="content">
+                                <p><strong>Bloom Intensity:</strong> 
+                                    <span class="bloom-indicator bloom-${event.intensity.toLowerCase()}"></span>
+                                    ${event.intensity}
+                                </p>
+                                <p><strong>Date:</strong> ${new Date(event.detection_date).toLocaleDateString()}</p>
+                                <p><strong>Satellite:</strong> ${event.satellite_source}</p>
+                                <p><strong>Confidence:</strong> ${event.confidence}%</p>
+                                <div class="tags">
+                                    <span class="tag is-primary">${event.vegetation_type}</span>
+                                    <span class="tag is-info">${event.season}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function updateStatistics() {
+            try {
+                const response = await fetch('/api/statistics/global');
+                const stats = await response.json();
+                
+                document.getElementById('total-events').textContent = stats.total_events;
+                document.getElementById('active-regions').textContent = stats.most_active_regions.length;
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Analysis functions
+        async function analyzeSpatialClusters() {
+            try {
+                const response = await fetch('/api/analysis/spatial-clusters?eps=0.5&min_samples=2');
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('cluster-results');
+                resultsDiv.innerHTML = `
+                    <div class="notification is-info">
+                        <p><strong>Clusters Found:</strong> ${data.total_clusters}</p>
+                        <p><strong>Noise Points:</strong> ${data.noise_points}</p>
+                        <p><strong>Algorithm:</strong> ${data.clustering_algorithm}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error analyzing clusters:', error);
+            }
+        }
+
+        async function analyzeTemporalPatterns() {
+            try {
+                const response = await fetch('/api/analysis/temporal-patterns');
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('temporal-results');
+                resultsDiv.innerHTML = `
+                    <div class="notification is-info">
+                        <p><strong>Trend:</strong> ${data.trend_direction}</p>
+                        <p><strong>Peak Months:</strong> ${data.peak_months.map(m => m[0]).join(', ')}</p>
+                        <p><strong>Total Events:</strong> ${data.total_events}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error analyzing temporal patterns:', error);
+            }
+        }
+
+        async function analyzeBloomDensity() {
+            try {
+                const response = await fetch('/api/analysis/bloom-density?grid_size=1.0');
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('density-results');
+                resultsDiv.innerHTML = `
+                    <div class="notification is-info">
+                        <p><strong>Active Cells:</strong> ${data.active_cells}</p>
+                        <p><strong>Max Density:</strong> ${data.max_density.toFixed(2)}</p>
+                        <p><strong>Grid Size:</strong> ${data.grid_size}°</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error analyzing density:', error);
+            }
+        }
+
+        async function getSpatialStatistics() {
+            try {
+                const response = await fetch('/api/analysis/spatial-statistics');
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('spatial-results');
+                resultsDiv.innerHTML = `
+                    <div class="notification is-info">
+                        <p><strong>Total Events:</strong> ${data.total_events}</p>
+                        <p><strong>Average Distance:</strong> ${data.distance_metrics.average_distance_km.toFixed(2)} km</p>
+                        <p><strong>Spatial Extent:</strong> ${data.spatial_extent_km.toFixed(2)} km</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error getting spatial statistics:', error);
+            }
+        }
+
+        // Map functions
+        async function loadInteractiveMap() {
+            try {
+                const response = await fetch('/api/maps/interactive?center_lat=20.0&center_lon=0.0&zoom=2');
+                const data = await response.json();
+                
+                const mapDiv = document.getElementById('interactive-map');
+                mapDiv.innerHTML = data.map_html;
+            } catch (error) {
+                console.error('Error loading interactive map:', error);
+            }
+        }
+
+        async function loadConservationMap() {
+            try {
+                const response = await fetch('/api/maps/conservation-priority');
+                const data = await response.json();
+                
+                const mapDiv = document.getElementById('conservation-map');
+                mapDiv.innerHTML = data.map_html;
+            } catch (error) {
+                console.error('Error loading conservation map:', error);
+            }
+        }
+
+        // ML functions
+        async function trainIntensityModel() {
+            try {
+                const response = await fetch('/api/ml/train-intensity-model', { method: 'POST' });
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('training-results');
+                resultsDiv.innerHTML = `
+                    <div class="notification is-success">
+                        <p><strong>Intensity Model Trained!</strong></p>
+                        <p>Best Model: ${data.best_model}</p>
+                        <p>R² Score: ${data.best_r2.toFixed(3)}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error training intensity model:', error);
+            }
+        }
+
+        async function trainTimingModel() {
+            try {
+                const response = await fetch('/api/ml/train-timing-model', { method: 'POST' });
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('training-results');
+                resultsDiv.innerHTML += `
+                    <div class="notification is-success">
+                        <p><strong>Timing Model Trained!</strong></p>
+                        <p>R² Score: ${data.r2.toFixed(3)}</p>
+                        <p>MSE: ${data.mse.toFixed(3)}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error training timing model:', error);
+            }
+        }
+
+        async function predictBloom() {
+            const lat = document.getElementById('pred-lat').value;
+            const lon = document.getElementById('pred-lon').value;
+            const vegetation = document.getElementById('pred-vegetation').value;
+            
+            if (!lat || !lon) {
+                alert('Please enter latitude and longitude');
+                return;
+            }
+            
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const response = await fetch(`/api/ml/predict-intensity?lat=${lat}&lon=${lon}&date=${today}&vegetation_type=${vegetation}&area_coverage=100.0`);
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('prediction-results');
+                resultsDiv.innerHTML = `
+                    <div class="notification is-success">
+                        <p><strong>Predicted Intensity:</strong> ${data.predicted_intensity}</p>
+                        <p><strong>Confidence Score:</strong> ${data.confidence_score.toFixed(3)}</p>
+                        <p><strong>Probabilities:</strong></p>
+                        <ul>
+                            <li>Low: ${(data.probability_distribution.low * 100).toFixed(1)}%</li>
+                            <li>Medium: ${(data.probability_distribution.medium * 100).toFixed(1)}%</li>
+                            <li>High: ${(data.probability_distribution.high * 100).toFixed(1)}%</li>
+                        </ul>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error predicting bloom:', error);
+            }
+        }
+
+        async function detectAnomalies() {
+            try {
+                const response = await fetch('/api/ml/analyze-anomalies');
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('anomaly-results');
+                resultsDiv.innerHTML = `
+                    <div class="notification is-warning">
+                        <p><strong>Anomalies Detected:</strong> ${data.anomalies_detected}</p>
+                        <p><strong>Anomaly Rate:</strong> ${(data.anomaly_rate * 100).toFixed(1)}%</p>
+                        <p><strong>Total Events:</strong> ${data.total_events}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error detecting anomalies:', error);
+            }
+        }
+
+        async function generateForecast() {
+            try {
+                const response = await fetch('/api/ml/forecast?months=6');
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('forecast-results');
+                resultsDiv.innerHTML = `
+                    <div class="notification is-info">
+                        <p><strong>Forecast Period:</strong> ${data.forecast_period}</p>
+                        <p><strong>Historical Average:</strong> ${data.historical_avg.toFixed(1)}</p>
+                        <p><strong>Trend:</strong> ${data.trend}</p>
+                        <p><strong>Next 3 Months:</strong></p>
+                        <ul>
+                            ${data.forecast.slice(0, 3).map(f => `<li>${f.date}: ${f.predicted_events} events</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error generating forecast:', error);
+            }
+        }
+
+        // Load initial data
+        loadBloomData();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloomTrack - Data Management & Processing</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            transition: transform 0.3s ease;
+        }
+        .result-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        .json-display {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background-color: #48bb78; }
+        .status-error { background-color: #f56565; }
+        .status-processing { background-color: #ed8936; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar is-dark">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <i class="fas fa-seedling"></i> <strong>BloomTrack</strong>
+            </a>
+        </div>
+        <div class="navbar-menu">
+            <div class="navbar-end">
+                <a class="navbar-item" href="/">Dashboard</a>
+                <a class="navbar-item" href="/advanced">Advanced</a>
+                <a class="navbar-item is-active" href="#data-management">Data Management</a>
+                <a class="navbar-item" href="/api/docs">API Docs</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero hero-gradient is-medium">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title is-1 has-text-white">
+                    <i class="fas fa-database"></i> Data Management & Processing
+                </h1>
+                <h2 class="subtitle is-3 has-text-white">
+                    Change Data, Process Results, and Monitor Bloom Events
+                </h2>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="section">
+        <div class="container">
+            
+            <!-- Data Input Section -->
+            <div class="columns">
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">
+                                <i class="fas fa-upload"></i> Input New Bloom Data
+                            </p>
+                        </div>
+                        <div class="card-content">
+                            <div class="field">
+                                <label class="label">Location</label>
+                                <div class="control">
+                                    <input class="input" type="text" id="new-location" placeholder="e.g., California Central Valley">
+                                </div>
+                            </div>
+                            
+                            <div class="field">
+                                <label class="label">Region</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="new-region">
+                                            <option value="North America">North America</option>
+                                            <option value="South America">South America</option>
+                                            <option value="Europe">Europe</option>
+                                            <option value="Asia">Asia</option>
+                                            <option value="Africa">Africa</option>
+                                            <option value="Oceania">Oceania</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="columns">
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label">Latitude</label>
+                                        <input class="input" type="number" id="new-lat" placeholder="36.7783" step="0.0001">
+                                    </div>
+                                </div>
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label">Longitude</label>
+                                        <input class="input" type="number" id="new-lon" placeholder="-119.4179" step="0.0001">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="field">
+                                <label class="label">Bloom Intensity</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="new-intensity">
+                                            <option value="low">Low</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="high">High</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="field">
+                                <label class="label">Vegetation Type</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="new-vegetation">
+                                            <option value="agricultural">Agricultural</option>
+                                            <option value="forest">Forest</option>
+                                            <option value="grassland">Grassland</option>
+                                            <option value="desert">Desert</option>
+                                            <option value="wetland">Wetland</option>
+                                            <option value="shrubland">Shrubland</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="field">
+                                <label class="label">Confidence (%)</label>
+                                <div class="control">
+                                    <input class="input" type="number" id="new-confidence" placeholder="85" min="0" max="100">
+                                </div>
+                            </div>
+                            
+                            <button class="button is-primary is-fullwidth" onclick="addNewBloomEvent()">
+                                <span class="icon"><i class="fas fa-plus"></i></span>
+                                <span>Add Bloom Event</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">
+                                <i class="fas fa-cogs"></i> Process Data
+                            </p>
+                        </div>
+                        <div class="card-content">
+                            <div class="buttons">
+                                <button class="button is-info" onclick="runSpatialAnalysis()">
+                                    <span class="icon"><i class="fas fa-map-marked-alt"></i></span>
+                                    <span>Spatial Analysis</span>
+                                </button>
+                                
+                                <button class="button is-success" onclick="runTemporalAnalysis()">
+                                    <span class="icon"><i class="fas fa-clock"></i></span>
+                                    <span>Temporal Analysis</span>
+                                </button>
+                                
+                                <button class="button is-warning" onclick="runMLPrediction()">
+                                    <span class="icon"><i class="fas fa-brain"></i></span>
+                                    <span>ML Prediction</span>
+                                </button>
+                                
+                                <button class="button is-primary" onclick="generateHeatmap()">
+                                    <span class="icon"><i class="fas fa-fire"></i></span>
+                                    <span>Generate Heatmap</span>
+                                </button>
+                            </div>
+                            
+                            <div class="field mt-4">
+                                <label class="label">Filter Data</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select id="filter-type">
+                                            <option value="all">All Events</option>
+                                            <option value="region">By Region</option>
+                                            <option value="intensity">By Intensity</option>
+                                            <option value="date">By Date Range</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button class="button is-dark is-fullwidth" onclick="applyFilters()">
+                                <span class="icon"><i class="fas fa-filter"></i></span>
+                                <span>Apply Filters</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Section -->
+            <div class="columns">
+                <div class="column is-full">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">
+                                <i class="fas fa-chart-line"></i> Processing Results
+                            </p>
+                            <button class="button is-small" onclick="clearResults()">
+                                <span class="icon"><i class="fas fa-trash"></i></span>
+                                <span>Clear</span>
+                            </button>
+                        </div>
+                        <div class="card-content">
+                            <div id="processing-status" class="mb-4">
+                                <span class="status-indicator status-success"></span>
+                                <span>Ready to process data</span>
+                            </div>
+                            
+                            <div id="results-container" class="result-container">
+                                <p class="has-text-grey">No processing results yet. Use the buttons above to analyze data.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Export Section -->
+            <div class="columns">
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">
+                                <i class="fas fa-download"></i> Export Data
+                            </p>
+                        </div>
+                        <div class="card-content">
+                            <div class="buttons">
+                                <button class="button is-info" onclick="exportData('geojson')">
+                                    <span class="icon"><i class="fas fa-globe"></i></span>
+                                    <span>Export GeoJSON</span>
+                                </button>
+                                
+                                <button class="button is-success" onclick="exportData('csv')">
+                                    <span class="icon"><i class="fas fa-file-csv"></i></span>
+                                    <span>Export CSV</span>
+                                </button>
+                                
+                                <button class="button is-warning" onclick="exportData('kml')">
+                                    <span class="icon"><i class="fas fa-map"></i></span>
+                                    <span>Export KML</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column is-half">
+                    <div class="card">
+                        <div class="card-header">
+                            <p class="card-header-title">
+                                <i class="fas fa-eye"></i> View Current Data
+                            </p>
+                        </div>
+                        <div class="card-content">
+                            <button class="button is-primary is-fullwidth" onclick="loadCurrentData()">
+                                <span class="icon"><i class="fas fa-refresh"></i></span>
+                                <span>Load Current Bloom Events</span>
+                            </button>
+                            
+                            <div id="current-data" class="mt-4">
+                                <p class="has-text-grey">Click "Load Current Bloom Events" to see the data</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Global variables
+        let currentData = [];
+        let processingResults = [];
+
+        // Add new bloom event (simulated - in real app would POST to API)
+        function addNewBloomEvent() {
+            const newEvent = {
+                location: document.getElementById('new-location').value,
+                region: document.getElementById('new-region').value,
+                latitude: parseFloat(document.getElementById('new-lat').value),
+                longitude: parseFloat(document.getElementById('new-lon').value),
+                intensity: document.getElementById('new-intensity').value,
+                vegetation_type: document.getElementById('new-vegetation').value,
+                confidence: parseInt(document.getElementById('new-confidence').value),
+                detection_date: new Date().toISOString(),
+                id: 'bloom_' + Date.now()
+            };
+            
+            if (!newEvent.location || !newEvent.latitude || !newEvent.longitude) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Simulate adding to current data
+            currentData.push(newEvent);
+            
+            updateStatus('success', 'New bloom event added successfully!');
+            displayResults('New Bloom Event Added', newEvent);
+            
+            // Clear form
+            document.getElementById('new-location').value = '';
+            document.getElementById('new-lat').value = '';
+            document.getElementById('new-lon').value = '';
+            document.getElementById('new-confidence').value = '';
+        }
+
+        // Run spatial analysis
+        async function runSpatialAnalysis() {
+            updateStatus('processing', 'Running spatial analysis...');
+            
+            try {
+                const response = await fetch('/api/analysis/spatial-clusters?eps=0.5&min_samples=2');
+                const data = await response.json();
+                
+                updateStatus('success', 'Spatial analysis completed!');
+                displayResults('Spatial Clustering Analysis', data);
+            } catch (error) {
+                updateStatus('error', 'Error running spatial analysis: ' + error.message);
+            }
+        }
+
+        // Run temporal analysis
+        async function runTemporalAnalysis() {
+            updateStatus('processing', 'Running temporal analysis...');
+            
+            try {
+                const response = await fetch('/api/analysis/temporal-patterns');
+                const data = await response.json();
+                
+                updateStatus('success', 'Temporal analysis completed!');
+                displayResults('Temporal Pattern Analysis', data);
+            } catch (error) {
+                updateStatus('error', 'Error running temporal analysis: ' + error.message);
+            }
+        }
+
+        // Run ML prediction
+        async function runMLPrediction() {
+            updateStatus('processing', 'Running ML prediction...');
+            
+            try {
+                const lat = 36.7783;
+                const lon = -119.4179;
+                const today = new Date().toISOString().split('T')[0];
+                
+                const response = await fetch(`/api/ml/predict-intensity?lat=${lat}&lon=${lon}&date=${today}&vegetation_type=agricultural&area_coverage=100.0`);
+                const data = await response.json();
+                
+                updateStatus('success', 'ML prediction completed!');
+                displayResults('ML Bloom Intensity Prediction', data);
+            } catch (error) {
+                updateStatus('error', 'Error running ML prediction: ' + error.message);
+            }
+        }
+
+        // Generate heatmap
+        async function generateHeatmap() {
+            updateStatus('processing', 'Generating heatmap...');
+            
+            try {
+                const response = await fetch('/api/visualization/heatmap?region=North America');
+                const data = await response.json();
+                
+                updateStatus('success', 'Heatmap generated!');
+                displayResults('Bloom Intensity Heatmap', data);
+            } catch (error) {
+                updateStatus('error', 'Error generating heatmap: ' + error.message);
+            }
+        }
+
+        // Apply filters
+        async function applyFilters() {
+            const filterType = document.getElementById('filter-type').value;
+            updateStatus('processing', 'Applying filters...');
+            
+            try {
+                let url = '/api/bloom-events';
+                let params = {};
+                
+                if (filterType === 'region') {
+                    params.region = 'North America';
+                } else if (filterType === 'intensity') {
+                    params.intensity = 'high';
+                } else if (filterType === 'date') {
+                    const startDate = new Date();
+                    startDate.setMonth(startDate.getMonth() - 6);
+                    params.start_date = startDate.toISOString().split('T')[0];
+                    params.end_date = new Date().toISOString().split('T')[0];
+                }
+                
+                const queryString = new URLSearchParams(params).toString();
+                const response = await fetch(`${url}?${queryString}`);
+                const data = await response.json();
+                
+                updateStatus('success', `Filtered data: ${data.length} events found`);
+                displayResults(`Filtered Bloom Events (${filterType})`, data);
+            } catch (error) {
+                updateStatus('error', 'Error applying filters: ' + error.message);
+            }
+        }
+
+        // Export data
+        async function exportData(format) {
+            updateStatus('processing', `Exporting data as ${format.toUpperCase()}...`);
+            
+            try {
+                const response = await fetch(`/api/export/spatial-data?format=${format}`);
+                const data = await response.json();
+                
+                updateStatus('success', `Data exported as ${format.toUpperCase()}!`);
+                displayResults(`Exported Data (${format.toUpperCase()})`, data);
+                
+                // Create download link
+                const blob = new Blob([data.data], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bloom_data.${format}`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                updateStatus('error', 'Error exporting data: ' + error.message);
+            }
+        }
+
+        // Load current data
+        async function loadCurrentData() {
+            updateStatus('processing', 'Loading current bloom events...');
+            
+            try {
+                const response = await fetch('/api/bloom-events');
+                const data = await response.json();
+                currentData = data;
+                
+                updateStatus('success', `Loaded ${data.length} bloom events`);
+                displayResults('Current Bloom Events', data);
+            } catch (error) {
+                updateStatus('error', 'Error loading data: ' + error.message);
+            }
+        }
+
+        // Update status indicator
+        function updateStatus(type, message) {
+            const statusElement = document.getElementById('processing-status');
+            const indicator = statusElement.querySelector('.status-indicator');
+            
+            indicator.className = `status-indicator status-${type}`;
+            statusElement.innerHTML = `<span class="status-indicator status-${type}"></span><span>${message}</span>`;
+        }
+
+        // Display results
+        function displayResults(title, data) {
+            const container = document.getElementById('results-container');
+            const timestamp = new Date().toLocaleString();
+            
+            const resultHtml = `
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <p class="card-header-title">${title}</p>
+                        <p class="card-header-title is-size-7 has-text-grey">${timestamp}</p>
+                    </div>
+                    <div class="card-content">
+                        <div class="json-display">${JSON.stringify(data, null, 2)}</div>
+                    </div>
+                </div>
+            `;
+            
+            if (container.innerHTML.includes('No processing results yet')) {
+                container.innerHTML = resultHtml;
+            } else {
+                container.innerHTML = resultHtml + container.innerHTML;
+            }
+        }
+
+        // Clear results
+        function clearResults() {
+            document.getElementById('results-container').innerHTML = '<p class="has-text-grey">No processing results yet. Use the buttons above to analyze data.</p>';
+            updateStatus('success', 'Results cleared');
+        }
+
+        // Load initial data
+        loadCurrentData();
+    </script>
+</body>
+</html>
