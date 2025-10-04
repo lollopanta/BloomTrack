@@ -27,6 +27,9 @@ from data_loaders.alos_loader import AlosDataLoader
 # Import prediction router
 from prediction.router import router as prediction_router
 
+# Import plant analysis router
+from plant_analysis.plant_router import router as plant_router
+
 # Configure logging
 def setup_logging():
     """Set up logging configuration for the application."""
@@ -70,6 +73,9 @@ alos_loader = AlosDataLoader()
 
 # Include prediction router
 app.include_router(prediction_router)
+
+# Include plant analysis router
+app.include_router(plant_router)
 
 # Pydantic models for API responses
 class DataResponse(BaseModel):

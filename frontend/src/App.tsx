@@ -6,6 +6,7 @@ import { Footer } from './components/Footer';
 import { Home } from './pages/Home';
 import { DatasetDetail } from './pages/DatasetDetail';
 import { About } from './pages/About';
+import PlantSimulator from './pages/PlantSimulator';
 
 function App() {
   return (
@@ -64,6 +65,19 @@ function App() {
                   transition={{ duration: 0.3 }}
                 >
                   <Home />
+                </motion.div>
+              } 
+            />
+            <Route 
+              path="/dati-simulati" 
+              element={
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <PlantSimulator />
                 </motion.div>
               } 
             />
