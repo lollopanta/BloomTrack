@@ -51,13 +51,26 @@ BloomTracker/
    pip install -r requirements.txt
    ```
 
-3. **Run the application:**
+3. **Set up environment variables:**
 
    ```bash
-   uvicorn main:app --reload
+   python setup_env.py
    ```
 
-4. **Access the API:**
+4. **Configure your API keys:**
+
+   Edit the `.env` file and set your DeepSeek API key:
+   ```bash
+   DEEPSEEK_API_KEY=your_actual_deepseek_api_key_here
+   ```
+
+5. **Run the application:**
+
+   ```bash
+   python main.py
+   ```
+
+6. **Access the API:**
    - API Documentation: http://localhost:8000/docs
    - Alternative Documentation: http://localhost:8000/redoc
    - Health Check: http://localhost:8000/health

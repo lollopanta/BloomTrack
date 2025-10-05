@@ -13,6 +13,7 @@ import logging
 
 from .plant_database import plant_db
 from .plant_advisor import plant_advisor, PlantAnalysis, HealthStatus
+from .deepseek_client import deepseek_client
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,40 @@ class SimulatedDataRequest(BaseModel):
     plant_name: str = Field(..., description="Name of the plant")
     growth_stage: str = Field(..., description="Growth stage")
     location: str = Field(default="Indoor", description="Plant location")
+
+class SimulatedDataInput(BaseModel):
+    """Input for simulated data from frontend sliders."""
+    plant_type: str = Field(..., description="Type of plant (chili_pepper, grapevine, olive_tree)")
+    temperature: float = Field(..., ge=0, le=50, description="Temperature in Celsius")
+    humidity: float = Field(..., ge=0, le=100, description="Humidity percentage")
+    soil_moisture: float = Field(..., ge=0, le=100, description="Soil moisture percentage")
+    light_intensity: float = Field(..., ge=0, le=20000, description="Light intensity in lux")
+    soil_ph: float = Field(..., ge=4.0, le=9.0, description="Soil pH level")
+
+class SimulatedDataResponse(BaseModel):
+    """Response for simulated data endpoint."""
+    plant_type: str
+    temperature: float
+    humidity: float
+    soil_moisture: float
+    light_intensity: float
+    soil_ph: float
+    timestamp: datetime
+    status: str
+
+class AIAdviceRequest(BaseModel):
+    """Request for AI-powered plant advice."""
+    plant_type: str = Field(..., description="Type of plant (chili_pepper, grapevine, olive_tree)")
+    current_conditions: Dict[str, Any] = Field(..., description="Current sensor readings and conditions")
+    user_question: str = Field(..., description="User's specific question about plant care")
+
+class AIAdviceResponse(BaseModel):
+    """Response for AI advice endpoint."""
+    success: bool
+    advice: str
+    plant_type: str
+    timestamp: datetime
+    ai_available: bool = True
 
 # API Endpoints
 
@@ -274,3 +309,93 @@ async def get_care_requirements(plant_name: str):
     except Exception as e:
         logger.error(f"Error getting care requirements: {str(e)}")
         raise HTTPException(status_code=500, detail="Error getting care requirements")
+
+@router.post("/simulated-data", response_model=SimulatedDataResponse)
+async def receive_simulated_data(data: SimulatedDataInput):
+    """Receive simulated sensor data from frontend sliders."""
+    try:
+        # Validate plant type
+        valid_plant_types = ["chili_pepper", "grapevine", "olive_tree"]
+        if data.plant_type not in valid_plant_types:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid plant type. Must be one of: {', '.join(valid_plant_types)}"
+            )
+        
+        # Create response with timestamp and status
+        response = SimulatedDataResponse(
+            plant_type=data.plant_type,
+            temperature=data.temperature,
+            humidity=data.humidity,
+            soil_moisture=data.soil_moisture,
+            light_intensity=data.light_intensity,
+            soil_ph=data.soil_ph,
+            timestamp=datetime.now(),
+            status="received"
+        )
+        
+        logger.info(f"Received simulated data for {data.plant_type}: "
+                   f"T={data.temperature}°C, H={data.humidity}%, "
+                   f"SM={data.soil_moisture}%, LI={data.light_intensity}lux, pH={data.soil_ph}")
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing simulated data: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error processing simulated data")
+
+@router.post("/ai-advice", response_model=AIAdviceResponse)
+async def get_ai_advice(request: AIAdviceRequest):
+    """Get AI-powered gardening advice using DeepSeek API."""
+    try:
+        # Validate plant type
+        valid_plant_types = ["chili_pepper", "grapevine", "olive_tree"]
+        if request.plant_type not in valid_plant_types:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid plant type. Must be one of: {', '.join(valid_plant_types)}"
+            )
+        
+        # Get plant data from database
+        plant_data = plant_db.get_plant_parameters(request.plant_type)
+        if not plant_data:
+            raise HTTPException(status_code=404, detail=f"Plant '{request.plant_type}' not found")
+        
+        # Validate current conditions
+        required_conditions = ['temperature', 'humidity', 'soil_moisture', 'light_intensity', 'soil_ph']
+        for condition in required_conditions:
+            if condition not in request.current_conditions:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Missing required condition: {condition}"
+                )
+        
+        # Check if DeepSeek is available
+        ai_available = deepseek_client._is_available()
+        
+        # Get AI advice
+        logger.info(f"Generating AI advice for {request.plant_type} plant")
+        advice = await deepseek_client.get_gardening_advice(
+            plant_data=plant_data,
+            current_conditions=request.current_conditions,
+            user_question=request.user_question
+        )
+        
+        response = AIAdviceResponse(
+            success=True,
+            advice=advice,
+            plant_type=request.plant_type,
+            timestamp=datetime.now(),
+            ai_available=ai_available
+        )
+        
+        logger.info(f"AI advice generated successfully for {request.plant_type}")
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating AI advice: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error generating AI advice")

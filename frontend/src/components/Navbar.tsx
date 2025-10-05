@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu, X, Satellite, Home, Info, Database, Leaf } from 'lucide-react';
+import { Menu, X, Satellite, Home, Info, Database, Leaf, Brain } from 'lucide-react';
 import { cn } from '../utils';
 
 const NavItem: React.FC<{ href: string; icon: React.ReactNode; children: React.ReactNode; isActive: boolean }> = ({
@@ -33,6 +33,7 @@ export const Navbar: React.FC = () => {
     { href: '/about', icon: <Info className="w-4 h-4" />, label: 'About' },
     { href: '/datasets', icon: <Database className="w-4 h-4" />, label: 'Datasets' },
     { href: '/dati-simulati', icon: <Leaf className="w-4 h-4" />, label: 'Plant Simulator' },
+    { href: '/plant-ai', icon: <Brain className="w-4 h-4" />, label: 'Plant AI Advisor' },
   ];
 
   return (

@@ -18,6 +18,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import our custom data loaders
 from data_loaders.modis_loader import ModisDataLoader
@@ -29,6 +33,7 @@ from prediction.router import router as prediction_router
 
 # Import plant analysis router
 from plant_analysis.plant_router import router as plant_router
+from plant_analysis.plant_ai_router import router as plant_ai_router
 
 # Configure logging
 def setup_logging():
@@ -76,6 +81,7 @@ app.include_router(prediction_router)
 
 # Include plant analysis router
 app.include_router(plant_router)
+app.include_router(plant_ai_router)
 
 # Pydantic models for API responses
 class DataResponse(BaseModel):
